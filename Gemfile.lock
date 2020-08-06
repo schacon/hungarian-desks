@@ -1,9 +1,3 @@
-GIT
-  remote: https://github.com/deliveroo/hungarian_algorithm_c.git
-  revision: 49a7295fc53284639264529e7dc157838221e08a
-  specs:
-    hungarian_algorithm_c (0.0.4)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -28,6 +22,7 @@ GEM
     mime-types-data (3.2020.0512)
     minitest (5.14.0)
     multi_xml (0.6.0)
+    munkres (0.1.0)
     thread_safe (0.3.6)
     tzinfo (1.2.6)
       thread_safe (~> 0.1)
@@ -41,7 +36,7 @@ DEPENDENCIES
   airtable
   awesome_print
   dotenv
-  hungarian_algorithm_c!
+  munkres
 
 RUBY VERSION
    ruby 2.6.3p62
