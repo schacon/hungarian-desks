@@ -9,25 +9,29 @@ choices = client.table(base_id, "Choices")
 desks = client.table(base_id, "Desks")
 
 def desk(id)
-  @dlist[id][:name]
+  @dnames[id]
 end
 
 @dlist = {}
+@dnames = {}
 desks.all.each do |desk|
   number = desk.name.split("-").first.to_i
-  @dlist[desk.id] = {name: desk.name, number: number}
+  @dlist[desk.name] = {id: desk.id, number: number}
+  @dnames[desk.id] = desk.name
 end
-ap @dlist
 
+# construct the user choice data array from airtable choices
 data = []
 ulist = {}
 choices.all.each do |choice|
   next if choice.desker_type != "Perma-desk"
 
+  ap choice
+
   user_choices = {}
   email = choice.email
-  ulist[choice.id] = {email: email}
-  user_choices[:email] = email
+  ulist[choice.email] = {id: choice.id, email: email}
+  user_choices[:email] = choice.email
   user_choices[:choices] = []
   user_choices[:choices] << [desk(choice.first_choice.first), choice.first_choice_weight.to_f] if choice.first_choice
   user_choices[:choices] << [desk(choice.second_choice.first), choice.second_choice_weight.to_f] if choice.second_choice
@@ -36,8 +40,25 @@ choices.all.each do |choice|
   data << user_choices
 end
 
-ap data
-ap ulist
+#ap data
+#ap ulist
 
-ap seats = @dlist.to_a.map { |a| a[1][:name] }
-ap Chooser.new(data, seats).assign!
+# construct a list of the possible choices
+seats = @dlist.keys
+
+# do the assignment
+assigns, score = Chooser.new(data, seats).assign!
+
+# show the results
+ap assigns
+puts "SCORE: #{score}"
+
+assigns.each do |desk_name, user_data|
+  ap desk_number = @dlist[desk_name][:number]
+  ap user_id = ulist[user_data[:user]][:id]
+  ap choice = choices.find(user_id)
+  choice.result_desk = desk_number
+  choice.save
+  ap choices.update(choice)
+  exit
+end
