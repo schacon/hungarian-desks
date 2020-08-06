@@ -8,15 +8,6 @@ class Chooser
     @assign = {}
   end
 
-  # find the best seat in the house for everyone
-  # - for each person
-  #   - normalize voting (too high or low)
-  #   - determine happiness ranking for each seat
-  # - for each seat
-  #   - find person most happy with it who is unopposed
-  # - each seat
-  #   - find person most happy from contested
-  # go through every seat and see who bid highest
   def assign!
     @results = {}
     @choices.each do |data|
@@ -36,63 +27,42 @@ class Chooser
       @results[data[:email]] = {total: total, power: power, happiness: happiness}
     end
 
-    ap @results
-    ap @bets
+    users = @results.keys
 
-    t = assign_unopposed(0.8)
-    puts "unopposed: assigned #{t}"
-
-    # assign happy, totally unopposed seats
-    while (t = remove_clear_winner) > 0
-      puts "clear: assigned #{t}"
-    end
-
-    ap @assign
-    ap @bets
-
-
-  end
-
-  def assign_unopposed(min = 0.8)
-    removed = 0
-    @bets.each do |seat, bids|
-      if (bids.size == 1) && (bids.first[1] >=  min)
-        email = bids.first[0]
-        @assign[email] ||= {}
-        @assign[email][:result] = seat
-        @assign[email][:result_score] = bids.first[1]
-
-        removed += 1
-        # remove seat
-        @bets.delete(seat)
-        # remove user's other bids
-        @bets.each { |seat, bids| bids.delete(email) } 
+    costs = []
+    @seats.each_with_index do |seat, x|
+      users.each_with_index do |user, y|
+        cost = @results[user][:happiness][seat].to_f rescue 0.0
+        cost = 1.0 - cost
+        costs[x] ||= []
+        costs[x][y] = cost
       end
-    end
-    removed
-  end
-
-  def remove_clear_winner
-    removed = 0
-    # assign seats with at least two bids and a clear happiness winner
-    @bets.each do |seat, bids|
-      if (bids.size > 1)
-        group = bids.sort { |a, b| b[1] <=> a[1] }
-        if (group[0][1] > group[1][1]) # clear winner
-          email = group[0][0]
-          @assign[email] ||= {}
-          @assign[email][:result] = seat
-          @assign[email][:result_score] = group[0][1]
-
-          removed += 1
-          # remove seat
-          @bets.delete(seat)
-          # remove user's other bids
-          @bets.each { |seat, bids| bids.delete(email) } 
+      if users.size < @seats.size
+        (@seats.size - users.size).times do |extra|
+          y = users.size + extra
+          costs[x][y] = 1.5
         end
       end
     end
-    removed
+
+    results = HungarianAlgorithmC.find_pairings(costs)
+
+    assign = {}
+    total_score = 0
+    results.each do |row, column|
+      seat = @seats[row]
+      user = users[column]
+      if user
+        happ = @results[user][:happiness][seat].to_f rescue 0.0
+        assign[seat] = {user: user, score: happ}
+        total_score += happ
+        puts "#{seat}: #{user} (#{happ})"
+      end
+    end
+
+    score = total_score / assign.size
+
+    return assign, score
   end
 
 end

@@ -7,7 +7,7 @@ data = [
     choices: [[1, 5], [2, 5], [3, 1], [4, 1]] # heavily like two
   },
   { email: 'scott', 
-    choices: [[1, 8], [2, 2], [3, 1], [4, 1]] # heavily like one
+    choices: [[1, 5], [2, 2], [3, 1], [4, 1]] # heavily like one
   },
   { email: 'tom', 
     choices: [[2, 4], [3, 4], [4, 4], [1, 4]] # like all the same
@@ -25,8 +25,9 @@ data = [
     choices: [[4, 1], [6, 1], [8, 1]] # bets too little 
   },
   { email: 'nick', 
-    choices: [] # bets none
+    choices: [[10, 1], [2, 2]] # bets none
   },
 ]
 
-Chooser.new(data, seats).assign!
+ap Chooser.new(data, seats).assign!
+#Chooser.new(data, seats).assign!

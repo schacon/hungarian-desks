@@ -1,3 +1,9 @@
+GIT
+  remote: https://github.com/deliveroo/hungarian_algorithm_c.git
+  revision: 49a7295fc53284639264529e7dc157838221e08a
+  specs:
+    hungarian_algorithm_c (0.0.4)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -35,6 +41,7 @@ DEPENDENCIES
   airtable
   awesome_print
   dotenv
+  hungarian_algorithm_c!
 
 RUBY VERSION
    ruby 2.6.3p62
