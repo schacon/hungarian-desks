@@ -1,8 +1,4 @@
-require 'rubygems'
-require 'bundler/setup'
-Bundler.require(:default)
-require 'active_support/all'
-Dotenv.load
+require './env'
 
 at_key = ENV["AIRTABLE_KEY"]
 base_id = "appKsX9MFToijWQx0"
