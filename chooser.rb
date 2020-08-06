@@ -39,23 +39,60 @@ class Chooser
     ap @results
     ap @bets
 
+    t = assign_unopposed(0.8)
+    puts "unopposed: assigned #{t}"
+
     # assign happy, totally unopposed seats
+    while (t = remove_clear_winner) > 0
+      puts "clear: assigned #{t}"
+    end
+
+    ap @assign
+    ap @bets
+
+
+  end
+
+  def assign_unopposed(min = 0.8)
+    removed = 0
     @bets.each do |seat, bids|
-      if (bids.size == 1) && (bids.first[1] >=  0.8)
+      if (bids.size == 1) && (bids.first[1] >=  min)
         email = bids.first[0]
         @assign[email] ||= {}
         @assign[email][:result] = seat
-        @assign[email][:result_score] = bids.first[0]
+        @assign[email][:result_score] = bids.first[1]
 
+        removed += 1
         # remove seat
         @bets.delete(seat)
         # remove user's other bids
         @bets.each { |seat, bids| bids.delete(email) } 
       end
     end
-
-    ap @assign
-    ap @bets
-
+    removed
   end
+
+  def remove_clear_winner
+    removed = 0
+    # assign seats with at least two bids and a clear happiness winner
+    @bets.each do |seat, bids|
+      if (bids.size > 1)
+        group = bids.sort { |a, b| b[1] <=> a[1] }
+        if (group[0][1] > group[1][1]) # clear winner
+          email = group[0][0]
+          @assign[email] ||= {}
+          @assign[email][:result] = seat
+          @assign[email][:result_score] = group[0][1]
+
+          removed += 1
+          # remove seat
+          @bets.delete(seat)
+          # remove user's other bids
+          @bets.each { |seat, bids| bids.delete(email) } 
+        end
+      end
+    end
+    removed
+  end
+
 end
