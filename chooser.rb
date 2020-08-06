@@ -43,10 +43,15 @@ class Chooser
   def initialize(choices, seats)
     @choices = choices
     @seats = seats
-    @bets = {}
-    @assign = {}
   end
 
+  # the assign! method takes the data and does the actual choice assignment
+  # -
+  # it uses the kuhn-munkres or 'hungarian' algorithm for bipartite matching
+  # to try to optimize the "cost" of the member assignment to get the lowest
+  # "cost", which in this case corresponds to the highest possible aggregate
+  # member rating
+  # -
   # returns something like:
   # [
   #    {
@@ -64,34 +69,44 @@ class Chooser
   # ]
   def assign!
     @results = {}
+
+    # first we go through and normalize the responses, since not everyone probably followed
+    # the directions. we actually don't care what they bet, we only look at it internally
+    # to determine relative value of the choices. for example, if all choices are rated
+    # equally, then the user is optimally happy with any outcome. if they did one twice as
+    # high as the other, then the happiness of the high bet is 1.0 and the half bet is 0.5, etc
     @choices.each do |data|
       values = data[:choices].map { |a, b| b.to_i == 0 ? 1 : b }
       max    = values.max
-      total  = values.sum
-      power = 12.0 / total rescue 0 # if they did more or less than 12, normalize the values
 
+      # determine the relative happiness for each choice for this user
       happiness = {}
       data[:choices].each do |a, b|
         b = b.to_i == 0 ? 1 : b
         hap = (b / max.to_f)
         happiness[a] = hap
-        @bets[a] ||= {}
-        @bets[a][data[:email]] = hap
       end
 
-      @results[data[:email]] = {total: total, power: power, happiness: happiness}
+      # record the happinessness
+      @results[data[:email]] = happiness
     end
 
+    # get a simple array of the users involved
     users = @results.keys
 
+    # calculate a cost matrix, with x dimension as users and y dimension as choices
+    # derive a "cost" by inverting the happiness preference value, so 0.0 is optimal (no cost)
+    # and 1.0 is worst (high cost)
     costs = []
     @seats.each_with_index do |seat, x|
       users.each_with_index do |user, y|
-        cost = @results[user][:happiness][seat].to_f rescue 0.0
-        cost = 1.1 - cost
+        cost = @results[user][seat].to_f rescue 0.0
+        cost = 1.1 - cost # make it so there is at least a tiny cost (0.1 is minimum value in this case)
         costs[x] ||= []
         costs[x][y] = cost
       end
+      # also pad the matrix's unchoosen choices with impossibly high cost (1.5) 
+      # so they are the last possible choice but we have a square matrix
       if users.size < @seats.size
         (@seats.size - users.size).times do |extra|
           y = users.size + extra
@@ -100,22 +115,26 @@ class Chooser
       end
     end
 
+    # calculate the pairings with the hungarian algo of the cost matrix
     m = Munkres.new(costs)
     results = m.find_pairings
 
+    # now we should have a matrix of the most cost-efficient pairings, convert
+    # this back to the original values
     assign = {}
     total_score = 0
     results.each do |row, column|
       seat = @seats[row]
       user = users[column]
       if user
-        happ = @results[user][:happiness][seat].to_f rescue 0.0
+        happ = @results[user][seat].to_f rescue 0.0
         assign[seat] = {user: user, score: happ}
         total_score += happ
         puts "#{seat}: #{user} (#{happ})"
       end
     end
 
+    # determine the average of the scores, so we have a good idea of how happy our users will be overall
     score = total_score / assign.size
 
     return assign, score
