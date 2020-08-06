@@ -1,12 +1,17 @@
 require './env'
 require './chooser'
 
-at_key = ENV["AIRTABLE_KEY"]
-base_id = "appKsX9MFToijWQx0"
+Airrecord.api_key = ENV["AIRTABLE_KEY"]
 
-client = Airtable::Client.new(at_key)
-choices = client.table(base_id, "Choices")
-desks = client.table(base_id, "Desks")
+class Choice < Airrecord::Table
+  self.base_key = "appKsX9MFToijWQx0"
+  self.table_name = "Choices"
+end
+
+class Desk < Airrecord::Table
+  self.base_key = "appKsX9MFToijWQx0"
+  self.table_name = "Desks"
+end
 
 def desk(id)
   @dnames[id]
@@ -14,29 +19,29 @@ end
 
 @dlist = {}
 @dnames = {}
-desks.all.each do |desk|
-  number = desk.name.split("-").first.to_i
-  @dlist[desk.name] = {id: desk.id, number: number}
-  @dnames[desk.id] = desk.name
+Desk.all.each do |desk|
+  number = desk["Name"].split("-").first.to_i
+  @dlist[desk["Name"]] = {id: desk.id, number: number}
+  @dnames[desk.id] = desk["Name"]
 end
 
 # construct the user choice data array from airtable choices
 data = []
 ulist = {}
-choices.all.each do |choice|
-  next if choice.desker_type != "Perma-desk"
+Choice.all.each do |choice|
+  next if choice["Desker Type"] != "Perma-desk"
 
   ap choice
 
   user_choices = {}
-  email = choice.email
-  ulist[choice.email] = {id: choice.id, email: email}
-  user_choices[:email] = choice.email
+  email = choice["Email"]
+  ulist[email] = {id: choice.id, email: email}
+  user_choices[:email] = email
   user_choices[:choices] = []
-  user_choices[:choices] << [desk(choice.first_choice.first), choice.first_choice_weight.to_f] if choice.first_choice
-  user_choices[:choices] << [desk(choice.second_choice.first), choice.second_choice_weight.to_f] if choice.second_choice
-  user_choices[:choices] << [desk(choice.third_choice.first), choice.third_choice_weight.to_f] if choice.third_choice
-  user_choices[:choices] << [desk(choice.fourth_choice.first), choice.fourth_choice_weight.to_f] if choice.fourth_choice
+  user_choices[:choices] << [desk(choice["First Choice"].first), choice["First Choice Weight]"].to_f] if choice["First Choice"]
+  user_choices[:choices] << [desk(choice["Second Choice"].first), choice["Second Choice Weight"].to_f] if choice["Second Choice"]
+  user_choices[:choices] << [desk(choice["Third Choice"].first), choice["Third Choice Weight"].to_f] if choice["Third Choice"]
+  user_choices[:choices] << [desk(choice["Fourth Choice"].first), choice["Fourth Choice Weight"].to_f] if choice["Fourth Choice"]
   data << user_choices
 end
 
@@ -54,11 +59,11 @@ ap assigns
 puts "SCORE: #{score}"
 
 assigns.each do |desk_name, user_data|
-  ap desk_number = @dlist[desk_name][:number]
+  ap desk_id = @dlist[desk_name][:id]
+  ap desk = Desk.find(desk_id)
   ap user_id = ulist[user_data[:user]][:id]
-  ap choice = choices.find(user_id)
-  choice.result_desk = desk_number
-  choice.save
-  ap choices.update(choice)
-  exit
+  ap choice = Choice.find(user_id)
+  choice["Result Desk"] = [desk_id]
+  choice["Result Score"] = user_data[:score]
+  ap choice.save
 end
