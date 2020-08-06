@@ -2,21 +2,24 @@ require './env'
 require './chooser'
 
 Airrecord.api_key = ENV["AIRTABLE_KEY"]
+base_key = ENV["AIRTABLE_BASE_KEY"]
 
 class Choice < Airrecord::Table
-  self.base_key = "appKsX9MFToijWQx0"
+  self.base_key = base_key
   self.table_name = "Choices"
 end
 
 class Desk < Airrecord::Table
-  self.base_key = "appKsX9MFToijWQx0"
+  self.base_key = base_key
   self.table_name = "Desks"
 end
 
+# wrapper to turn an id into a desk name
 def desk(id)
   @dnames[id]
 end
 
+# make some easier indexes for the desk info
 @dlist = {}
 @dnames = {}
 Desk.all.each do |desk|
@@ -31,8 +34,6 @@ ulist = {}
 Choice.all.each do |choice|
   next if choice["Desker Type"] != "Perma-desk"
 
-  ap choice
-
   user_choices = {}
   email = choice["Email"]
   ulist[email] = {id: choice.id, email: email}
@@ -45,6 +46,7 @@ Choice.all.each do |choice|
   data << user_choices
 end
 
+# debug data
 #ap data
 #ap ulist
 
@@ -58,12 +60,18 @@ assigns, score = Chooser.new(data, seats).assign!
 ap assigns
 puts "SCORE: #{score}"
 
+# actually go through the results and update the choices table with the assignments
 assigns.each do |desk_name, user_data|
-  ap desk_id = @dlist[desk_name][:id]
-  ap desk = Desk.find(desk_id)
-  ap user_id = ulist[user_data[:user]][:id]
-  ap choice = Choice.find(user_id)
+  # get the desk assigned
+  desk_id = @dlist[desk_name][:id]
+  desk = Desk.find(desk_id)
+
+  # get the user's choice record
+  user_id = ulist[user_data[:user]][:id]
+
+  # update the record with the assignment
+  choice = Choice.find(user_id)
   choice["Result Desk"] = [desk_id]
   choice["Result Score"] = user_data[:score]
-  ap choice.save
+  choice.save
 end
