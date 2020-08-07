@@ -2,15 +2,14 @@ require './env'
 require './chooser'
 
 Airrecord.api_key = ENV["AIRTABLE_KEY"]
-base_key = ENV["AIRTABLE_BASE_KEY"]
 
 class Choice < Airrecord::Table
-  self.base_key = base_key
+  self.base_key = ENV["AIRTABLE_BASE_KEY"]
   self.table_name = "Choices"
 end
 
 class Desk < Airrecord::Table
-  self.base_key = base_key
+  self.base_key = ENV["AIRTABLE_BASE_KEY"]
   self.table_name = "Desks"
 end
 
