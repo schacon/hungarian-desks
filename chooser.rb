@@ -91,6 +91,9 @@ class Chooser
       @results[data[:email]] = happiness
     end
 
+    # debug
+    # ap @results
+
     # get a simple array of the users involved
     users = @results.keys
 

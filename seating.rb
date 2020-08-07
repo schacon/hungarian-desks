@@ -38,16 +38,12 @@ Choice.all.each do |choice|
   ulist[email] = {id: choice.id, email: email}
   user_choices[:email] = email
   user_choices[:choices] = []
-  user_choices[:choices] << [desk(choice["First Choice"].first), choice["First Choice Weight]"].to_f] if choice["First Choice"]
+  user_choices[:choices] << [desk(choice["First Choice"].first), choice["First Choice Weight"].to_f] if choice["First Choice"]
   user_choices[:choices] << [desk(choice["Second Choice"].first), choice["Second Choice Weight"].to_f] if choice["Second Choice"]
   user_choices[:choices] << [desk(choice["Third Choice"].first), choice["Third Choice Weight"].to_f] if choice["Third Choice"]
   user_choices[:choices] << [desk(choice["Fourth Choice"].first), choice["Fourth Choice Weight"].to_f] if choice["Fourth Choice"]
   data << user_choices
 end
-
-# debug data
-#ap data
-#ap ulist
 
 # construct a list of the possible choices
 seats = @dlist.keys
@@ -55,10 +51,14 @@ seats = @dlist.keys
 # do the assignment
 assigns, score = Chooser.new(data, seats).assign!
 
+# debug data
+# ap data     # all choices sent to chooser
+# ap assigns  # the assignments that came back
+
 # show the results
-ap assigns
 puts "SCORE: #{score}"
 
+puts "UPLOADING..."
 # actually go through the results and update the choices table with the assignments
 assigns.each do |desk_name, user_data|
   # get the desk assigned
