@@ -26,7 +26,7 @@ We can invert the values of the happiness score (so `0` is totally happy - no co
 
 ## The Airtable Solution
 
-Now we just need everyone in the company to fill out a form telling us their top choices and bets, so we can calculate the optimal assignments. We decided to try the easiest route, which is to have everyone fill out an Airtable form, which gives us a nice simple database of all the users and their choices that is easily API accessible. Then we wrote this script to pull those choices down, do the math, make the assignments and upload the choices (as well as the calculated score for each user).
+Now we just need everyone in the company to fill out a form telling us their top choices and bets, so we can calculate the optimal assignments. We decided to try the easiest route, which is to have everyone fill out an Airtable form, which gives us a nice simple database of all the users and their choices that is easily API accessible. Then we wrote this script to pull those choices down, do the math, make the assignments and upload the assignments (as well as the calculated "happiness" score for each user).
 
 ## Run it Yourself
 
